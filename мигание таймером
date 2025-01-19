@@ -1,0 +1,48 @@
+/*
+ * File:   main.c
+ * Author: krivo
+ *
+ * Created on 27 сентября 2024 г., 12:49
+ */
+#pragma config FOSC = XT        // Oscillator Selection bits (XT oscillator)
+#pragma config WDTE = OFF       // Watchdog Timer Enable bit (WDT disabled)
+#pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
+#pragma config BOREN = ON       // Brown-out Reset Enable bit (BOR enabled)
+#pragma config LVP = ON         // Low-Voltage (Single-Supply) In-Circuit Serial Programming Enable bit (RB3/PGM pin has PGM function; low-voltage programming enabled)
+#pragma config CPD = OFF        // Data EEPROM Memory Code Protection bit (Data EEPROM code protection off)
+#pragma config WRT = OFF        // Flash Program Memory Write Enable bits (Write protection off; all program memory may be written to by EECON control)
+#pragma config CP = OFF         // Flash Program Memory Code Protection bit (Code protection off)
+
+
+#include <xc.h>
+#define _XTAL_FREQ 4000000 //тактовая частота (гц)
+
+unsigned short number_of_interruptions = 0;
+void interrupt timer0()
+{
+    number_of_interruptions++;
+    T0IF = 0; //сброс флага прерывания
+    TMR0=60;
+}
+//portbbits=0 не горит, portbbits=1 горит
+void main(void) {
+    PORTB = 0x00;
+    TRISB = 0x00;
+    INTCON=0xE0;
+//включим глобальные прерывания и прерывания от таймера, установив в 1 биты 7 и 5 регистра INTCON
+    OPTION_REG = 0x07; //установка коэфицента предделителя = 256
+    TMR0=60;
+    while(1)
+    {
+        if(number_of_interruptions==20) //вкл
+        {
+            PORTBbits.RB4=1;
+            number_of_interruptions = 0;
+        }
+        if (number_of_interruptions==10) //выкл
+        {
+            PORTBbits.RB4=0;
+        }
+    }
+    return;
+}
